@@ -1,16 +1,14 @@
 // src/components/PoliceLogin.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-// --- NEW IMPORT ---
-import { globalStyles as styles } from '../styles/AppStyles'; // Import the new styles
-// ------------------
+import { globalStyles as styles } from '../styles/AppStyles';
+import MARGAILogo from './MARGAILogo.jsx';
 
 function PoliceLogin() {
     const navigate = useNavigate();
 
     const handleLogin = () => {
-        // ... (login logic)
-        navigate('/police/dashboard'); 
+        navigate('/police/dashboard');
     };
 
     const handleSignUp = () => {
@@ -18,17 +16,17 @@ function PoliceLogin() {
     };
 
     return (
-        // Use the imported styles object
-        <div style={styles.loginContainer}> 
+        <div style={styles.centeredPageContainer}>
             <div style={styles.card}>
-                <h3 style={styles.heading}>Police Login</h3>
+                <MARGAILogo />
+                <h3 style={styles.heading}>Police Control Login</h3>
                 
-                <input type="text" placeholder="Id" style={styles.input} />
+                <input type="text" placeholder="Officer ID" style={styles.input} />
                 <input type="password" placeholder="Password" style={styles.input} />
                 
-                <button onClick={handleLogin} style={styles.loginButton}>Login</button>
-                <p style={{ margin: '10px 0', color: '#6C757D' }}>— OR —</p>
-                <button onClick={handleSignUp} style={styles.signUpButton}>Sign Up</button>
+                <button onClick={handleLogin} style={styles.primaryButton}>Login</button>
+                <p style={{ margin: '20px 0', color: 'var(--text-secondary)' }}>— New User? —</p>
+                <button onClick={handleSignUp} style={styles.secondaryButton}>Sign Up</button>
             </div>
         </div>
     );

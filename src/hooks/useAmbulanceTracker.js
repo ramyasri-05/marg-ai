@@ -1,114 +1,86 @@
 // src/hooks/useAmbulanceTracker.js
-
-import { useState, useEffect } from 'react';
-import { JUNCTIONS } from '../data/mockCity';
+import { useState, useEffect, useMemo } from 'react';
 import * as geolib from 'geolib';
 
-// Constants for simulation tuning
-const PROXIMITY_THRESHOLD_METERS = 600; 
-const SIMULATION_SPEED_MS = 300; 
+const PROXIMITY_THRESHOLD_METERS = 500;
+const SIMULATION_SPEED_MS = 1000;
 
 export const useAmbulanceTracker = (initialSignals, activeRoutePath) => {
-    
-    const [signals, setSignals] = useState(initialSignals);
-    
-    // Initial position set to the start of the route
+    const junctionsOnRoute = useMemo(() => {
+        if (!activeRoutePath || activeRoutePath.length === 0) return [];
+        return initialSignals.filter(junction =>
+            activeRoutePath.some(pathPoint =>
+                geolib.getDistance({ latitude: junction.lat, longitude: junction.lng }, { latitude: pathPoint[0], longitude: pathPoint[1] }) < 50
+            )
+        );
+    }, [initialSignals, activeRoutePath]);
+
+    const [signals, setSignals] = useState(junctionsOnRoute);
     const [ambulancePos, setAmbulancePos] = useState({
-        lat: activeRoutePath[0][0], 
-        lng: activeRoutePath[0][1],
+        lat: activeRoutePath ? activeRoutePath[0][0] : 0,
+        lng: activeRoutePath ? activeRoutePath[0][1] : 0,
         isActive: false,
         routeIndex: 0,
     });
 
     const routeLength = activeRoutePath ? activeRoutePath.length : 0;
 
-    // --- LOGIC 1: THE GPS EMITTER (MOVEMENT) ---
     useEffect(() => {
         if (!ambulancePos.isActive || routeLength === 0) return;
-
         const intervalId = setInterval(() => {
             setAmbulancePos(prevPos => {
                 const nextIndex = prevPos.routeIndex + 1;
-                
                 if (nextIndex >= routeLength) {
                     clearInterval(intervalId);
-                    return { ...prevPos, isActive: false }; 
+                    return { ...prevPos, isActive: false };
                 }
-                
                 const [newLat, newLng] = activeRoutePath[nextIndex];
-
-                return {
-                    ...prevPos,
-                    lat: newLat,
-                    lng: newLng,
-                    routeIndex: nextIndex,
-                };
+                return { ...prevPos, lat: newLat, lng: newLng, routeIndex: nextIndex };
             });
         }, SIMULATION_SPEED_MS);
-
         return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ambulancePos.isActive, activeRoutePath, routeLength]); 
+    }, [ambulancePos.isActive, routeLength, activeRoutePath]);
 
-
-    // --- LOGIC 2: THE GREEN CORRIDOR INTELLIGENCE (Signal Clearing) ---
     useEffect(() => {
         if (!ambulancePos.isActive || routeLength === 0) return;
-
-        let nextJunction = null;
-        for (let i = 0; i < JUNCTIONS.length; i++) {
-            const junction = signals.find(s => s.id === JUNCTIONS[i].id);
-            if (junction && junction.status !== 'Green' && junction.status !== 'Red-Forced') {
-                nextJunction = junction;
-                break;
-            }
+        let nextJunctionToClear = null;
+        for (const junction of signals) {
+             if (junction.status !== 'Green' && junction.status !== 'Red-Forced') {
+                const distanceToRouteEnd = geolib.getDistance({ latitude: junction.lat, longitude: junction.lng }, { latitude: activeRoutePath[routeLength-1][0], longitude: activeRoutePath[routeLength-1][1] });
+                const distanceAmbulanceToRouteEnd = geolib.getDistance({ latitude: ambulancePos.lat, longitude: ambulancePos.lng }, { latitude: activeRoutePath[routeLength-1][0], longitude: activeRoutePath[routeLength-1][1] });
+                if (distanceToRouteEnd < distanceAmbulanceToRouteEnd) {
+                    nextJunctionToClear = junction;
+                    break;
+                }
+             }
         }
-
-        if (nextJunction) {
-            const distance = geolib.getDistance(
-                { latitude: ambulancePos.lat, longitude: ambulancePos.lng },
-                { latitude: nextJunction.lat, longitude: nextJunction.lng }
-            );
-
+        if (nextJunctionToClear) {
+            const distance = geolib.getDistance({ latitude: ambulancePos.lat, longitude: ambulancePos.lng }, { latitude: nextJunctionToClear.lat, longitude: nextJunctionToClear.lng });
             if (distance < PROXIMITY_THRESHOLD_METERS) {
-                setSignals(prevSignals => prevSignals.map(s => 
-                    s.id === nextJunction.id && s.status !== 'Red-Forced' ? { ...s, status: 'Green' } : s
+                setSignals(prevSignals => prevSignals.map(s =>
+                    s.id === nextJunctionToClear.id && s.status !== 'Red-Forced' ? { ...s, status: 'Green' } : s
                 ));
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ambulancePos.lat, ambulancePos.lng, ambulancePos.isActive, routeLength]);
+    }, [ambulancePos.lat, ambulancePos.lng, ambulancePos.isActive, routeLength, signals, activeRoutePath]);
 
-    
-    // --- LOGIC 3: MANUAL OVERRIDE FUNCTION and Controls ---
     const toggleManualOverride = (junctionId) => {
         setSignals(prevSignals => prevSignals.map(s => {
             if (s.id === junctionId) {
-                const newStatus = s.status === 'Red-Forced' ? 'Red' : 'Red-Forced'; 
-                return { ...s, status: newStatus };
+                return { ...s, status: s.status === 'Red-Forced' ? 'Red' : 'Red-Forced' };
             }
             return s;
         }));
     };
 
     const startSimulation = () => {
-        setSignals(JUNCTIONS); 
-        setAmbulancePos({
-            lat: activeRoutePath[0][0],
-            lng: activeRoutePath[0][1],
-            isActive: true,
-            routeIndex: 0
-        });
+        setSignals(junctionsOnRoute);
+        setAmbulancePos({ lat: activeRoutePath[0][0], lng: activeRoutePath[0][1], isActive: true, routeIndex: 0 });
     };
-    
+
     const resetSimulation = () => {
-        setSignals(JUNCTIONS);
-        setAmbulancePos({
-            lat: activeRoutePath[0][0],
-            lng: activeRoutePath[0][1],
-            isActive: false,
-            routeIndex: 0,
-        });
+        setSignals(junctionsOnRoute);
+        setAmbulancePos({ lat: activeRoutePath[0][0], lng: activeRoutePath[0][1], isActive: false, routeIndex: 0 });
     };
 
     return { signals, ambulancePos, toggleManualOverride, startSimulation, resetSimulation };

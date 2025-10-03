@@ -1,122 +1,257 @@
 // src/styles/AppStyles.js
-import React from 'react';
 
-// --- Shared Styles for All Login/Setup Screens (Dark Background) ---
+// --- Styles for Login, Role Selection, and Setup Screens ---
 export const globalStyles = {
-    loginContainer: { 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh', 
-        backgroundColor: '#1C2833', // Deep Blue-Black for modern interface
-        fontFamily: 'Arial, sans-serif'
+    // This is the main layout for all auth/login/setup pages
+    centeredPageContainer: {
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        width: '100vw',
+        fontFamily: "'Poppins', sans-serif",
+        background: 'linear-gradient(135deg, #121212 0%, #1E1E1E 50%, #2A2A2A 100%)',
     },
-    card: { 
-        backgroundColor: '#FFFFFF', 
-        padding: '35px', 
-        borderRadius: '12px', 
-        boxShadow: '0 10px 30px rgba(0,0,0,0.15)', 
-        width: '350px', 
-        textAlign: 'center' 
+    card: {
+        backgroundColor: 'rgba(30, 30, 30, 0.7)',
+        backdropFilter: 'blur(10px)',
+        padding: '40px',
+        borderRadius: '12px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+        width: '420px',
+        textAlign: 'center',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
     },
-    input: { 
-        width: '100%', 
-        padding: '12px', 
-        margin: '10px 0', 
-        border: '1px solid #D1D9E6', 
-        borderRadius: '6px',
-        boxSizing: 'border-box'
+    input: {
+        width: '100%',
+        padding: '14px 20px',
+        margin: '10px 0',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        color: 'var(--text-primary)',
+        border: '1px solid #444',
+        borderRadius: '8px',
+        fontSize: '16px',
+        transition: 'border-color 0.2s, box-shadow 0.2s'
     },
-    
-    // --- Button Styles ---
-    primaryButton: { 
-        width: '100%', 
-        padding: '12px', 
-        marginTop: '15px', 
-        backgroundColor: '#007BFF', 
-        color: 'white', 
-        cursor: 'pointer', 
-        borderRadius: '8px', 
+    primaryButton: {
+        width: '100%',
+        padding: '14px',
+        marginTop: '15px',
+        background: 'linear-gradient(90deg, #007BFF, #00BFFF)',
+        color: 'white',
+        cursor: 'pointer',
+        borderRadius: '8px',
         border: 'none',
-        fontWeight: 'bold',
-        transition: 'background-color 0.2s, transform 0.1s'
+        fontWeight: '600',
+        fontSize: '16px',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '10px'
     },
-    secondaryButton: { 
-        width: '100%', 
-        padding: '12px', 
-        backgroundColor: '#6C757D', 
-        color: 'white', 
-        cursor: 'pointer', 
-        borderRadius: '8px', 
+    secondaryButton: {
+        width: '100%',
+        padding: '14px',
+        marginTop: '10px',
+        backgroundColor: 'var(--secondary-gray)',
+        color: 'white',
+        cursor: 'pointer',
+        borderRadius: '8px',
         border: 'none',
-        fontWeight: 'bold',
+        fontWeight: '600',
+        fontSize: '16px',
         transition: 'background-color 0.2s, transform 0.1s'
     },
     heading: {
-        color: '#333333',
-        marginBottom: '20px'
+        color: 'var(--text-primary)',
+        marginBottom: '25px',
+        fontWeight: '600'
     },
-    logo: { 
-        fontSize: '30px', 
-        fontWeight: 'extrabold', 
-        marginBottom: '25px', 
-        color: '#0056B3',
-        border: '2px solid #0056B3',
-        padding: '10px'
-    }
 };
 
-// --- Dashboard Specific Styles (Dark Theme for Control Room/Tracking) ---
+// --- Dashboard Specific Styles ---
 export const dashboardStyles = {
-    container: { display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif' },
-    
-    // Dark sidebar for a Control Panel/Cockpit feel
-    controlPanel: { 
-        width: '400px', 
-        padding: '25px', 
-        backgroundColor: '#2C3E50', // Deep Control Room Blue/Grey
-        color: '#ECF0F1', // Light text
-        boxShadow: '4px 0 15px rgba(0,0,0,0.5)',
-        display: 'flex', 
+    container: {
+        display: 'flex',
+        height: '100vh',
+        fontFamily: "'Poppins', sans-serif",
+        position: 'relative',
+    },
+    controlPanel: {
+        width: '400px',
+        minWidth: '400px',
+        height: '100vh',
+        padding: '25px',
+        backgroundColor: 'var(--dark-surface)',
+        color: 'var(--text-primary)',
+        borderRight: '1px solid #333',
+        display: 'flex',
         flexDirection: 'column',
-        overflowY: 'auto'
+        gap: '25px',
+        overflowY: 'auto',
     },
-    header: { 
-        color: '#00BFFF', 
-        marginBottom: '20px', 
-        borderBottom: '3px solid #00BFFF',
-        paddingBottom: '10px'
-    }, 
-    subHeader: { 
-        color: '#BDC3C7', 
-        borderBottom: '1px solid #495460', 
-        paddingBottom: '5px', 
-        marginBottom: '10px' 
+    scrollableArea: {
+        flexGrow: 1,
+        overflowY: 'auto',
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'var(--secondary-gray) var(--dark-card)',
     },
-    
-    // Status and Data Styles
-    statusText: { fontSize: '15px', marginBottom: '8px' },
-    dataHighlight: { color: '#2ECC71', fontWeight: 'bold' },
-    etaHighlight: { fontSize: '1.8em', color: '#F1C40F', fontWeight: 'bold' }, 
-    
-    signalEntry: { 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '8px', 
-        padding: '10px',
-        backgroundColor: '#34495E', 
-        borderRadius: '6px',
+    header: {
+        color: 'var(--accent-cyan)',
+        paddingBottom: '10px',
+        fontSize: '24px',
+        fontWeight: '600',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        margin: 0
+    },
+    subHeader: {
+        color: 'var(--text-secondary)',
+        textTransform: 'uppercase',
+        fontSize: '12px',
+        fontWeight: '600',
+        letterSpacing: '1px',
+        marginBottom: '15px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+    },
+    statCard: {
+        backgroundColor: 'var(--dark-card)',
+        padding: '15px',
+        borderRadius: '10px',
+        border: '1px solid #333',
+    },
+    driverMetricsContainer: {
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '15px'
+    },
+    driverMetricBox: {
+        backgroundColor: 'var(--dark-card)',
+        padding: '15px',
+        borderRadius: '10px',
+        textAlign: 'center'
+    },
+    driverMetricLabel: {
+        color: 'var(--text-secondary)',
+        fontSize: '12px',
+        textTransform: 'uppercase',
+        margin: '0 0 5px 0'
+    },
+    driverMetricValue: {
+        color: 'var(--accent-yellow)',
+        fontSize: '24px',
+        fontWeight: '600',
+        margin: 0
+    },
+    driverInstructionCard: {
+        backgroundColor: 'var(--primary-blue)',
+        borderRadius: '12px',
+        padding: '25px',
+        textAlign: 'center',
+        flexGrow: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    driverInstructionIcon: {
+        fontSize: '80px',
+        color: 'white',
+        marginBottom: '15px'
+    },
+    driverInstructionText: {
+        fontSize: '22px',
+        fontWeight: '600',
+        color: 'white',
+        margin: 0
+    },
+    tripProgressContainer: {
+        width: '100%',
+        backgroundColor: 'var(--dark-card)',
+        borderRadius: '10px',
+        padding: '5px'
+    },
+    tripProgressBar: {
+        height: '10px',
+        backgroundColor: 'var(--accent-green)',
+        borderRadius: '5px',
+        transition: 'width 0.5s ease-in-out'
+    },
+    statusText: {
+        fontSize: '15px',
+        margin: 0,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    dataHighlight: {
+        color: 'var(--accent-green)',
+        fontWeight: 'bold'
+    },
+    signalEntry: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '10px',
+        padding: '12px',
+        backgroundColor: 'var(--dark-card)',
+        borderRadius: '8px',
+        border: '1px solid #333',
         transition: 'background-color 0.2s'
     },
-    
-    // Hospital Specific Highlighting
-    hospitalStatusBox: {
-        padding: '15px', 
-        border: '2px solid #E74C3C', // Red border for urgency
-        borderRadius: '8px', 
-        backgroundColor: '#34495E', 
-        color: '#fff' 
+    overrideButton: {
+        backgroundColor: 'transparent',
+        color: 'var(--accent-yellow)',
+        border: '1px solid var(--accent-yellow)',
+        borderRadius: '6px',
+        padding: '5px 10px',
+        cursor: 'pointer',
+        transition: 'background-color 0.2s, color 0.2s',
+        fontSize: '12px',
     },
-    mapContainer: { flexGrow: 1, backgroundColor: '#1E293B', border: '1px solid #ccc' }, // Dark background for map load
+    activationButton: {
+        padding: '15px',
+        fontSize: '16px',
+        fontWeight: 'bold',
+        color: '#fff',
+        backgroundColor: 'var(--accent-red)',
+        border: 'none',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        transition: 'background-color 0.3s, transform 0.2s'
+    },
+    eventLogContainer: {
+        backgroundColor: 'var(--dark-card)',
+        padding: '15px',
+        borderRadius: '10px',
+        border: '1px solid #333',
+        flexGrow: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+    },
+    eventLogContent: {
+        flexGrow: 1,
+        overflowY: 'auto',
+        fontFamily: 'monospace',
+        fontSize: '14px',
+    },
+    eventLogItem: {
+        marginBottom: '8px',
+        paddingBottom: '8px',
+        borderBottom: '1px solid #333',
+        color: 'var(--text-secondary)',
+    },
+    eventLogTimestamp: {
+        color: 'var(--accent-cyan)',
+        marginRight: '10px',
+    },
+    mapContainer: {
+        flexGrow: 1,
+        backgroundColor: 'var(--dark-bg)'
+    },
 };
