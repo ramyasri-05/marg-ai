@@ -1,5 +1,5 @@
 // src/hooks/useAmbulanceTracker.js
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import * as geolib from 'geolib';
 
 const PROXIMITY_THRESHOLD_METERS = 500;
@@ -73,15 +73,19 @@ export const useAmbulanceTracker = (initialSignals, activeRoutePath) => {
         }));
     };
 
-    const startSimulation = () => {
-        setSignals(junctionsOnRoute);
-        setAmbulancePos({ lat: activeRoutePath[0][0], lng: activeRoutePath[0][1], isActive: true, routeIndex: 0 });
-    };
+    const startSimulation = useCallback(() => {
+        if (activeRoutePath && activeRoutePath.length > 0) {
+            setSignals(junctionsOnRoute);
+            setAmbulancePos({ lat: activeRoutePath[0][0], lng: activeRoutePath[0][1], isActive: true, routeIndex: 0 });
+        }
+    }, [activeRoutePath, junctionsOnRoute]);
 
-    const resetSimulation = () => {
-        setSignals(junctionsOnRoute);
-        setAmbulancePos({ lat: activeRoutePath[0][0], lng: activeRoutePath[0][1], isActive: false, routeIndex: 0 });
-    };
+    const resetSimulation = useCallback(() => {
+        if (activeRoutePath && activeRoutePath.length > 0) {
+            setSignals(junctionsOnRoute);
+            setAmbulancePos({ lat: activeRoutePath[0][0], lng: activeRoutePath[0][1], isActive: false, routeIndex: 0 });
+        }
+    }, [activeRoutePath, junctionsOnRoute]);
 
     return { signals, ambulancePos, toggleManualOverride, startSimulation, resetSimulation };
 };

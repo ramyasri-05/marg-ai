@@ -19,11 +19,18 @@ const MapResizer = () => {
 
 const ambulanceIcon = L.divIcon({ html: `<div style="background-color: white; width: 24px; height: 24px; border-radius: 50%; border: 4px solid var(--primary-blue); box-shadow: 0 0 10px var(--primary-blue);"></div>`, className: '', iconSize: [32, 32], iconAnchor: [16, 16], });
 const hospitalIcon = L.divIcon({ html: `<div style="font-size: 20px; font-weight: bold; color: white; background: var(--accent-red); width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 3px solid white; box-shadow: 0 0 10px #000;">H</div>`, className: '', iconSize: [32, 32], iconAnchor: [16, 32], });
-const getTrafficIcon = (status) => {
-    let color = 'var(--accent-red)';
-    if (status === 'Green') color = 'var(--accent-green)';
-    if (status === 'Red-Forced') color = '#8b0000';
-    return L.divIcon({ className: `traffic-light`, html: `<div style="background-color: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #121212;"></div>`, iconSize: [25, 25], iconAnchor: [12, 12], });
+const createIconHTML = (color) => `<div style="background-color: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #121212; box-shadow: 0 0 10px ${color};"></div>`;
+const trafficIconRed = L.divIcon({ className: 'traffic-light', html: createIconHTML('var(--accent-red)'), iconSize: [25, 25], iconAnchor: [12, 12] });
+const trafficIconGreen = L.divIcon({ className: 'traffic-light', html: createIconHTML('var(--accent-green)'), iconSize: [25, 25], iconAnchor: [12, 12] });
+
+const MapPanner = ({ position, isActive }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (isActive && position.lat && position.lng) {
+            map.panTo([position.lat, position.lng], { animate: true, duration: 0.5 });
+        }
+    }, [map, position.lat, position.lng, isActive]);
+    return null;
 };
 
 const mockTurnInstructions = [ { index: 0, icon: <FaArrowUp />, text: 'Start and head North' }, { index: 3, icon: <FaArrowLeft />, text: 'Turn Left at Varadhi Bridge' }, { index: 5, icon: <FaArrowRight />, text: 'Turn Right at Labbipet Jct' }, { index: 7, icon: <FaArrowRight />, text: 'Keep Right onto MG Road' }, { index: 9, icon: <FaFlagCheckered />, text: 'Destination Ahead' }, ];
@@ -37,9 +44,7 @@ function DriverDashboard() {
     const destination = HOSPITAL_OPTIONS.find(h => h.value === destKey);
     const activeRouteData = ROUTES_MOCK[destKey]?.[routeKey];
 
-    if (!activeRouteData) {
-        return ( <div style={globalStyles.centeredPageContainer}><div style={globalStyles.card}><h2 style={{color: 'var(--accent-red)'}}>Error: Route Not Found</h2><button style={globalStyles.primaryButton} onClick={() => navigate('/')}>Go Home</button></div></div> );
-    }
+    if (!activeRouteData) { return ( <div style={globalStyles.centeredPageContainer}><div style={globalStyles.card}><h2 style={{color: 'var(--accent-red)'}}>Error: Route Not Found</h2><button style={globalStyles.primaryButton} onClick={() => navigate('/')}>Go Home</button></div></div> ); }
 
     const routePath = activeRouteData.path;
     const { signals, ambulancePos, startSimulation } = useAmbulanceTracker(JUNCTIONS, routePath);
@@ -75,9 +80,10 @@ function DriverDashboard() {
             <div style={styles.mapContainer}>
                 <MapContainer center={MAP_CENTER} zoom={ZOOM_LEVEL} style={{ height: '100%', width: '100%' }}>
                     <MapResizer />
+                    <MapPanner position={ambulancePos} isActive={ambulancePos.isActive} />
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" attribution='&copy; OpenStreetMap contributors' />
                     <Polyline positions={routePath} color={'var(--accent-red)'} weight={6} opacity={0.9} />
-                    {signals.map(signal => <Marker key={signal.id} position={[signal.lat, signal.lng]} icon={getTrafficIcon(signal.status)} />)}
+                    {signals.map(signal => <Marker key={signal.id} position={[signal.lat, signal.lng]} icon={signal.status.includes('Red') ? trafficIconRed : trafficIconGreen} />)}
                     {destination && <Marker position={[destination.lat, destination.lng]} icon={hospitalIcon} title={destination.name} />}
                     <Marker position={[ambulancePos.lat, ambulancePos.lng]} icon={ambulanceIcon} />
                 </MapContainer>
