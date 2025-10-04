@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet
 import { divIcon } from 'leaflet';
 import { JUNCTIONS, MAP_CENTER, ZOOM_LEVEL, ROUTES_MOCK } from '../data/mockCity';
 import { useAmbulanceTracker } from '../hooks/useAmbulanceTracker.js';
-import { dashboardStyles as styles, globalStyles } from '../styles/AppStyles';
+import { dashboardStyles as styles, globalStyles } from '../Styles/AppStyles.js';
 import { FaBroadcastTower, FaTrafficLight, FaUserShield, FaVideo, FaHistory } from 'react-icons/fa';
 import AIMonitor from '../components/AIMonitor.jsx';
 

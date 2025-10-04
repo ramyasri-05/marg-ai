@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HOSPITAL_OPTIONS } from '../data/mockCity';
-import { globalStyles as styles } from '../styles/AppStyles';
+import { globalStyles as styles } from '../Styles/AppStyles.js';
 import MARGAILogo from './MARGAILogo';
 import { FaChevronDown } from 'react-icons/fa';
 
@@ -84,7 +84,7 @@ const internalStyles = {
         width: '100%',
         padding: '14px 20px'
     },
-    dropdownMenu: { position: 'absolute', top: '105%', left: 0, width: '100%', maxHeight: '200px', overflowY: 'auto', backgroundColor: 'var(--dark-card)', border: '1px solid #444', borderRadius: '8px', zIndex: 100, backgroundColor: 'rgba(40, 40, 40, 0.8)', backdropFilter: 'blur(10px)', },
+    dropdownMenu: { position: 'absolute', top: '105%', left: 0, width: '100%', maxHeight: '200px', overflowY: 'auto', border: '1px solid #444', borderRadius: '8px', zIndex: 100, backgroundColor: 'rgba(40, 40, 40, 0.8)', backdropFilter: 'blur(10px)' },
     dropdownItem: { padding: '12px 20px', color: 'var(--text-primary)', cursor: 'pointer', transition: 'background-color 0.2s', '&:hover': {backgroundColor: 'var(--primary-blue)'} }
 };
 

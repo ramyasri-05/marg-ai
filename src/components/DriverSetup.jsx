@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { HOSPITAL_OPTIONS, ROUTES_MOCK } from '../data/mockCity';
 // CHANGE: The styles are imported as 'styles'
-import { globalStyles as styles } from '../styles/AppStyles';
+import { globalStyles as styles } from '../Styles/AppStyles.js';
 import MARGAILogo from './MARGAILogo';
 
 function DriverSetup() {

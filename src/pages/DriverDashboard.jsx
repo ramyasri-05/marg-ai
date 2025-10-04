@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet
 import L from 'leaflet';
 import { JUNCTIONS, MAP_CENTER, ZOOM_LEVEL, ROUTES_MOCK, HOSPITAL_OPTIONS } from '../data/mockCity';
 import { useAmbulanceTracker } from '../hooks/useAmbulanceTracker.js';
-import { dashboardStyles as styles, globalStyles } from '../styles/AppStyles';
+import { dashboardStyles as styles, globalStyles } from '../Styles/AppStyles.js';
 import { FaAmbulance, FaHospital, FaClock, FaRoad, FaArrowUp, FaArrowLeft, FaArrowRight, FaFlagCheckered } from 'react-icons/fa';
 
 const MapResizer = () => {

@@ -1,7 +1,7 @@
 // src/components/AdminLogin.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { globalStyles as styles } from '../styles/AppStyles';
+import { globalStyles as styles } from '../Styles/AppStyles.js';
 import MARGAILogo from './MARGAILogo.jsx';
 
 function AdminLogin() {

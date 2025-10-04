@@ -6,12 +6,13 @@ import './index.css';
 
 // --- IMPORT ALL REQUIRED FILES ---
 import RoleSelection from './components/RoleSelection.jsx';
-import PoliceLogin from './components/PoliceLogin.jsx';
 import DriverLogin from './components/DriverLogin.jsx';
 import DriverSetup from './components/DriverSetup.jsx';
 import HospitalDashboard from './components/HospitalDashboard.jsx'; 
 import AdminLogin from './components/AdminLogin.jsx'; 
 import HospitalLogin from './components/HospitalLogin.jsx';
+import PoliceLogin from './components/PoliceLogin.jsx';
+import PoliceDashboard from './pages/PoliceDashboard.jsx';
 
 import DriverDashboard from './pages/DriverDashboard.jsx';
 import ControlDashboard from './pages/ControlDashboard.jsx';
@@ -33,7 +34,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/driver/setup" element={<DriverSetup />} /> 
 
         {/* --- DASHBOARD FLOWS --- */}
-        <Route path="/police/dashboard" element={<ControlDashboard role="Police" />} /> 
+        <Route path="/police/dashboard" element={<PoliceDashboard />} /> 
         <Route path="/admin/dashboard" element={<ControlDashboard role="Admin" />} /> 
         <Route path="/hospital/dashboard" element={<HospitalDashboard />} /> 
         <Route path="/driver/navigation" element={<DriverDashboard />} /> 

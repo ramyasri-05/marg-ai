@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { FaVideo, FaCheckCircle } from 'react-icons/fa';
 
 // Placeholder images for the simulation
-const cameraFeedUrl = 'https://i.imgur.com/v8tY5aW.png'; // A static road
+const cameraFeedUrl = 'https://images.unsplash.com/photo-1569163139578-310551055745?q=80&w=2670&auto=format&fit=crop'; // A static road
 const detectedFeedUrl = 'https://i.imgur.com/kP8c50r.png'; // Same road with a green box
 
 function AIMonitor({ onDetect, isSimulationActive }) {
