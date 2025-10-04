@@ -79,14 +79,13 @@ The application will be available at `http://localhost:5173/` (or another port i
 
 The project follows a standard Vite + React structure.
 /src
-|-- /components/   # Reusable UI components (Logins, Dashboards, Logo, etc.)
+|-- /components/   # Reusable UI components (Logins, Dashboards, etc.)
 |-- /data/         # Mock data for the simulation (mockCity.js)
-|-- /hooks/        # Custom React hooks (useAmbulanceTracker.js)
+|-- /hooks/        # Custom React hooks (like useAmbulanceTracker)
 |-- /pages/        # Top-level page components for dashboards
-|-- /styles/       # CSS-in-JS style definitions (AppStyles.js)
+|-- /Styles/       # CSS-in-JS style definitions (AppStyles.js)
 |-- index.css      # Global CSS and variables
 |-- main.jsx       # Main application entrypoint and router setup
-
 ---
 ## 📄 License
 
