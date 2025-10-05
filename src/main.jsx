@@ -1,15 +1,13 @@
-// src/main.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 
-// --- IMPORT ALL REQUIRED FILES ---
 import RoleSelection from './components/RoleSelection.jsx';
 import DriverLogin from './components/DriverLogin.jsx';
 import DriverSetup from './components/DriverSetup.jsx';
-import HospitalDashboard from './components/HospitalDashboard.jsx'; 
-import AdminLogin from './components/AdminLogin.jsx'; 
+import HospitalDashboard from './components/HospitalDashboard.jsx';
+import AdminLogin from './components/AdminLogin.jsx';
 import HospitalLogin from './components/HospitalLogin.jsx';
 import PoliceLogin from './components/PoliceLogin.jsx';
 import PoliceDashboard from './pages/PoliceDashboard.jsx';
@@ -17,10 +15,8 @@ import PoliceDashboard from './pages/PoliceDashboard.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
 import ControlDashboard from './pages/ControlDashboard.jsx';
 
-// --- LEAFLET CSS ---
 import 'leaflet/dist/leaflet.css';
 
-// CHANGE: The <React.StrictMode> tags have been removed from around the BrowserRouter.
 ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>

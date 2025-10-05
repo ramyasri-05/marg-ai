@@ -1,7 +1,6 @@
 // src/components/MARGAILogo.jsx
 import React from 'react';
 
-// THIS IS THE FIX: The 'styles' object must be defined BEFORE the component uses it.
 const styles = {
     logoContainer: {
         textAlign: 'center',

@@ -8,12 +8,10 @@ function HospitalLogin() {
     const navigate = useNavigate();
 
     const handleLogin = () => {
-        // Navigate to the hospital dashboard after login
         navigate('/hospital/dashboard');
     };
 
     return (
-        // Use the simple centered layout container
         <div style={styles.centeredPageContainer}>
             <div style={styles.card}>
                 <MARGAILogo />
