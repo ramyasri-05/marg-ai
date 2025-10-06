@@ -2,31 +2,33 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import * as geolib from 'geolib';
 
+export const SIMULATION_SPEED_MS = 1000;
 const PROXIMITY_THRESHOLD_METERS = 500;
-const SIMULATION_SPEED_MS = 1000;
 
 export const useAmbulanceTracker = (initialSignals, activeRoutePath) => {
+    const isRouteReady = activeRoutePath && activeRoutePath.length > 0;
+
     const junctionsOnRoute = useMemo(() => {
-        if (!activeRoutePath || activeRoutePath.length === 0) return [];
+        if (!isRouteReady) return [];
         return initialSignals.filter(junction =>
             activeRoutePath.some(pathPoint =>
                 geolib.getDistance({ latitude: junction.lat, longitude: junction.lng }, { latitude: pathPoint[0], longitude: pathPoint[1] }) < 50
             )
         );
-    }, [initialSignals, activeRoutePath]);
+    }, [initialSignals, activeRoutePath, isRouteReady]);
 
     const [signals, setSignals] = useState(junctionsOnRoute);
     const [ambulancePos, setAmbulancePos] = useState({
-        lat: activeRoutePath ? activeRoutePath[0][0] : 0,
-        lng: activeRoutePath ? activeRoutePath[0][1] : 0,
+        lat: isRouteReady ? activeRoutePath[0][0] : 0,
+        lng: isRouteReady ? activeRoutePath[0][1] : 0,
         isActive: false,
         routeIndex: 0,
     });
 
-    const routeLength = activeRoutePath ? activeRoutePath.length : 0;
+    const routeLength = isRouteReady ? activeRoutePath.length : 0;
 
     useEffect(() => {
-        if (!ambulancePos.isActive || routeLength === 0) return;
+        if (!ambulancePos.isActive || !isRouteReady) return;
         const intervalId = setInterval(() => {
             setAmbulancePos(prevPos => {
                 const nextIndex = prevPos.routeIndex + 1;
@@ -39,10 +41,10 @@ export const useAmbulanceTracker = (initialSignals, activeRoutePath) => {
             });
         }, SIMULATION_SPEED_MS);
         return () => clearInterval(intervalId);
-    }, [ambulancePos.isActive, routeLength, activeRoutePath]);
+    }, [ambulancePos.isActive, routeLength, activeRoutePath, isRouteReady]);
 
     useEffect(() => {
-        if (!ambulancePos.isActive || routeLength === 0) return;
+        if (!ambulancePos.isActive || !isRouteReady) return;
         let nextJunctionToClear = null;
         for (const junction of signals) {
              if (junction.status !== 'Green' && junction.status !== 'Red-Forced') {
@@ -62,7 +64,7 @@ export const useAmbulanceTracker = (initialSignals, activeRoutePath) => {
                 ));
             }
         }
-    }, [ambulancePos.lat, ambulancePos.lng, ambulancePos.isActive, routeLength, signals, activeRoutePath]);
+    }, [ambulancePos.lat, ambulancePos.lng, ambulancePos.isActive, routeLength, signals, activeRoutePath, isRouteReady]);
 
     const toggleManualOverride = (junctionId) => {
         setSignals(prevSignals => prevSignals.map(s => {
@@ -74,18 +76,11 @@ export const useAmbulanceTracker = (initialSignals, activeRoutePath) => {
     };
 
     const startSimulation = useCallback(() => {
-        if (activeRoutePath && activeRoutePath.length > 0) {
+        if (isRouteReady) {
             setSignals(junctionsOnRoute);
             setAmbulancePos({ lat: activeRoutePath[0][0], lng: activeRoutePath[0][1], isActive: true, routeIndex: 0 });
         }
-    }, [activeRoutePath, junctionsOnRoute]);
+    }, [activeRoutePath, junctionsOnRoute, isRouteReady]);
 
-    const resetSimulation = useCallback(() => {
-        if (activeRoutePath && activeRoutePath.length > 0) {
-            setSignals(junctionsOnRoute);
-            setAmbulancePos({ lat: activeRoutePath[0][0], lng: activeRoutePath[0][1], isActive: false, routeIndex: 0 });
-        }
-    }, [activeRoutePath, junctionsOnRoute]);
-
-    return { signals, ambulancePos, toggleManualOverride, startSimulation, resetSimulation };
+    return { signals, ambulancePos, toggleManualOverride, startSimulation };
 };

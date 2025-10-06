@@ -1,19 +1,19 @@
 // src/data/mockCity.js
-export const MAP_CENTER = [16.51625, 80.61597];
+export const MAP_CENTER = [16.5062, 80.6479];
 export const ZOOM_LEVEL = 14;
 
 export const HOSPITAL_OPTIONS = [
-    { name: "Manipal Hospital", address: "Tadepalle", value: "manipal_hosp", lat: 16.50500, lng: 80.65000 },
+    { name: "Manipal Hospital", address: "Near Varadhi, Tadepalli", value: "manipal_hosp", lat: 16.498, lng: 80.618 },
     { name: "Ramesh Hospitals", address: "MG Road, Labbipet", value: "ramesh_hosp", lat: 16.513, lng: 80.645 },
     { name: "Vijaya Super Speciality Hospital", address: "Suryarao Pet", value: "vijaya_hosp", lat: 16.518, lng: 80.630 },
 ];
 
 export const JUNCTIONS = [
-    { id: 'J1', name: 'City Center (Start)', lat: 16.51625, lng: 80.61597, status: 'Red', traffic: 'Medium' },
-    { id: 'J2', name: 'Varadhi Bridge Cross', lat: 16.52822, lng: 80.59123, status: 'Red', traffic: 'High' },
-    { id: 'J3', name: 'Labbipet Junction', lat: 16.52861, lng: 80.63836, status: 'Red', traffic: 'High' },
-    { id: 'J4', name: 'MG Road Cross', lat: 16.52403, lng: 80.67743, status: 'Red', traffic: 'Low' },
-    { id: 'J5', name: 'Manipal Destination', lat: 16.50500, lng: 80.65000, status: 'Red', traffic: 'Low' },
+    { id: 'J1', name: 'Benz Circle (Start)', lat: 16.5012, lng: 80.6575, status: 'Red' },
+    { id: 'J2', name: 'Varadhi Bridge Cross', lat: 16.500, lng: 80.619, status: 'Red' },
+    { id: 'J3', name: 'Labbipet Junction', lat: 16.515, lng: 80.644, status: 'Red' },
+    { id: 'J4', name: 'Suryaraopet Junction', lat: 16.518, lng: 80.635, status: 'Red' },
+    { id: 'J5', name: 'MG Road Junction', lat: 16.517, lng: 80.650, status: 'Red' },
 ];
 
 const ROUTE_TO_MANIPAL_HOSPITAL_MAIN = [ [16.51625, 80.61597], [16.51800, 80.61000], [16.52000, 80.60500], [16.52822, 80.59123], [16.52900, 80.60000], [16.52861, 80.63836], [16.52700, 80.65000], [16.52403, 80.67743], [16.51500, 80.66500], [16.50500, 80.65000] ];

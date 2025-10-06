@@ -1,95 +1,61 @@
-// src/pages/DriverDashboard.jsx
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import { JUNCTIONS, MAP_CENTER, ZOOM_LEVEL, ROUTES_MOCK, HOSPITAL_OPTIONS } from '../data/mockCity';
+import { GoogleMap, MarkerF, Polyline } from '@react-google-maps/api';
+import * as geolib from 'geolib';
+import { JUNCTIONS, MAP_CENTER, HOSPITAL_OPTIONS } from '../data/mockCity';
 import { useAmbulanceTracker } from '../hooks/useAmbulanceTracker.js';
 import { dashboardStyles as styles, globalStyles } from '../styles/AppStyles';
-import { FaAmbulance, FaHospital, FaClock, FaRoad, FaArrowUp, FaArrowLeft, FaArrowRight, FaFlagCheckered } from 'react-icons/fa';
+import { FaAmbulance, FaHospital, FaClock, FaRoad, FaArrowUp, FaArrowLeft, FaArrowRight, FaFlagCheckered, FaSpinner } from 'react-icons/fa';
 
-const MapResizer = () => {
-    const map = useMap();
-    useEffect(() => {
-        const timeoutId = setTimeout(() => { map.invalidateSize() }, 100);
-        return () => clearTimeout(timeoutId);
-    }, [map]);
-    return null;
-};
+const mapStyles = [ { "elementType": "geometry", "stylers": [ { "color": "#242f3e" } ] }, { "elementType": "labels.text.fill", "stylers": [ { "color": "#746855" } ] }, { "elementType": "labels.text.stroke", "stylers": [ { "color": "#242f3e" } ] }, { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "poi.park", "elementType": "geometry", "stylers": [ { "color": "#263c3f" } ] }, { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [ { "color": "#6b9a76" } ] }, { "featureType": "road", "elementType": "geometry", "stylers": [ { "color": "#38414e" } ] }, { "featureType": "road", "elementType": "geometry.stroke", "stylers": [ { "color": "#212a37" } ] }, { "featureType": "road", "elementType": "labels.text.fill", "stylers": [ { "color": "#9ca5b3" } ] }, { "featureType": "road.highway", "elementType": "geometry", "stylers": [ { "color": "#746855" } ] }, { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [ { "color": "#1f2835" } ] }, { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [ { "color": "#f3d19c" } ] }, { "featureType": "transit", "elementType": "geometry", "stylers": [ { "color": "#2f3948" } ] }, { "featureType": "transit.station", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "water", "elementType": "geometry", "stylers": [ { "color": "#17263c" } ] }, { "featureType": "water", "elementType": "labels.text.fill", "stylers": [ { "color": "#515c6d" } ] }, { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [ { "color": "#17263c" } ] } ];
 
-const ambulanceIcon = L.divIcon({ html: `<div style="background-color: white; width: 24px; height: 24px; border-radius: 50%; border: 4px solid var(--primary-blue); box-shadow: 0 0 10px var(--primary-blue);"></div>`, className: '', iconSize: [32, 32], iconAnchor: [16, 16], });
-const hospitalIcon = L.divIcon({ html: `<div style="font-size: 20px; font-weight: bold; color: white; background: var(--accent-red); width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 3px solid white; box-shadow: 0 0 10px #000;">H</div>`, className: '', iconSize: [32, 32], iconAnchor: [16, 32], });
-const createIconHTML = (color) => `<div style="background-color: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #121212; box-shadow: 0 0 10px ${color};"></div>`;
-const trafficIconRed = L.divIcon({ className: 'traffic-light', html: createIconHTML('var(--accent-red)'), iconSize: [25, 25], iconAnchor: [12, 12] });
-const trafficIconGreen = L.divIcon({ className: 'traffic-light', html: createIconHTML('var(--accent-green)'), iconSize: [25, 25], iconAnchor: [12, 12] });
+const ambulanceIcon = { path: window.google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: "white", fillOpacity: 1, strokeColor: "var(--primary-blue)", strokeWeight: 5 };
+const hospitalIcon = { path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm-1.5 9H9v-2h1.5V9.5h2V11H14v2h-1.5v1.5h-2V13H9v-2z', fillColor: "white", fillOpacity: 1, strokeWeight: 0, rotation: 0, scale: 1.3, anchor: new window.google.maps.Point(12, 22), labelOrigin: new window.google.maps.Point(12, 8), };
+const junctionIcon = { path: window.google.maps.SymbolPath.CIRCLE, scale: 5, fillColor: "var(--accent-yellow)", fillOpacity: 0.9, strokeColor: "white", strokeWeight: 1.5, };
 
-const MapPanner = ({ position, isActive }) => {
-    const map = useMap();
-    useEffect(() => {
-        if (isActive && position.lat && position.lng) {
-            map.panTo([position.lat, position.lng], { animate: true, duration: 0.5 });
-        }
-    }, [map, position.lat, position.lng, isActive]);
-    return null;
-};
-
-const mockTurnInstructions = [ { index: 0, icon: <FaArrowUp />, text: 'Start and head North' }, { index: 3, icon: <FaArrowLeft />, text: 'Turn Left at Varadhi Bridge' }, { index: 5, icon: <FaArrowRight />, text: 'Turn Right at Labbipet Jct' }, { index: 7, icon: <FaArrowRight />, text: 'Keep Right onto MG Road' }, { index: 9, icon: <FaFlagCheckered />, text: 'Destination Ahead' }, ];
-
-function DriverDashboard() {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const query = new URLSearchParams(location.search);
-    const destKey = query.get('dest') || 'manipal_hosp';
-    const routeKey = query.get('route') || 'main';
-    const destination = HOSPITAL_OPTIONS.find(h => h.value === destKey);
-    const activeRouteData = ROUTES_MOCK[destKey]?.[routeKey];
-
-    if (!activeRouteData) { return ( <div style={globalStyles.centeredPageContainer}><div style={globalStyles.card}><h2 style={{color: 'var(--accent-red)'}}>Error: Route Not Found</h2><button style={globalStyles.primaryButton} onClick={() => navigate('/')}>Go Home</button></div></div> ); }
-
-    const routePath = activeRouteData.path;
-    const { signals, ambulancePos, startSimulation } = useAmbulanceTracker(JUNCTIONS, routePath);
-
-    useEffect(() => {
-        if (activeRouteData && !ambulancePos.isActive && ambulancePos.routeIndex === 0) {
-            startSimulation();
-        }
-    }, [activeRouteData, ambulancePos.isActive, ambulancePos.routeIndex, startSimulation]);
-
-    const routeProgress = routePath.length > 1 ? ambulancePos.routeIndex / (routePath.length - 1) : 1;
-    const estimatedETA = ambulancePos.isActive ? `${Math.max(1, Math.ceil(activeRouteData.timeInMinutes * (1 - routeProgress)))} min` : "Arrived";
-    const distanceRemaining = ambulancePos.isActive ? `${(parseFloat(activeRouteData.distance) * (1 - routeProgress)).toFixed(1)} km` : "0.0 km";
-    const currentInstruction = [...mockTurnInstructions].reverse().find(inst => ambulancePos.routeIndex >= inst.index) || mockTurnInstructions[0];
-
+const MapSimulation = ({ destination }) => {
+    const [directions, setDirections] = useState(null);
+    const [currentStep, setCurrentStep] = useState(null);
+    useEffect(() => { if (!destination || !window.google) return; const directionsService = new window.google.maps.DirectionsService(); const origin = { lat: JUNCTIONS[0].lat, lng: JUNCTIONS[0].lng }; const dest = { lat: destination.lat, lng: destination.lng }; directionsService.route({ origin, destination: dest, travelMode: 'DRIVING' }, (result, status) => { if (status === 'OK') setDirections(result); else console.error(`error fetching directions ${result}`); }); }, [destination]);
+    const trackerPath = directions ? window.google.maps.geometry.encoding.decodePath(directions.routes[0].overview_polyline).map(p => [p.lat(), p.lng()]) : [];
+    const { signals, ambulancePos, startSimulation } = useAmbulanceTracker(JUNCTIONS, trackerPath);
+    useEffect(() => { if (trackerPath.length > 0 && !ambulancePos.isActive && ambulancePos.routeIndex === 0) { startSimulation(); } }, [trackerPath, ambulancePos.isActive, ambulancePos.routeIndex, startSimulation]);
+    useEffect(() => { if (!directions || !ambulancePos.isActive) return; const steps = directions.routes[0].legs[0].steps; let stepIndex = 0; let cumulativePath = 0; for (let i = 0; i < steps.length; i++) { cumulativePath += steps[i].path.length; if (ambulancePos.routeIndex < cumulativePath) { stepIndex = i; break; } } setCurrentStep(steps[stepIndex]); }, [ambulancePos.routeIndex, directions, ambulancePos.isActive]);
+    if (!directions) { return ( <div style={{...styles.container, justifyContent: 'center', alignItems: 'center'}}><h2 style={styles.header}><FaSpinner className="fa-spin" /> Calculating Real Route...</h2></div> ); }
+    const routeInfo = directions.routes[0].legs[0];
+    const routeProgress = trackerPath.length > 1 ? ambulancePos.routeIndex / (trackerPath.length - 1) : 1;
+    const timeRemaining = (routeInfo.duration.value * (1 - routeProgress));
+    const distanceRemaining = (routeInfo.distance.value * (1 - routeProgress));
+    const estimatedETA = ambulancePos.isActive ? `${Math.ceil(timeRemaining / 60)} min` : "Arrived";
+    const distanceText = ambulancePos.isActive ? `${(distanceRemaining / 1000).toFixed(1)} km` : "0.0 km";
+    const instructionText = currentStep ? currentStep.instructions.replace(/<[^>]*>/g, '') : "Approaching Destination...";
+    const getManeuverIcon = (maneuver) => { if (maneuver?.includes('turn-left')) return <FaArrowLeft />; if (maneuver?.includes('turn-right')) return <FaArrowRight />; return <FaArrowUp />; };
+    const instructionIcon = currentStep ? getManeuverIcon(currentStep.maneuver) : <FaFlagCheckered />;
     return (
-        <div style={styles.container}>
+        <>
             <div style={styles.controlPanel}>
                 <h2 style={styles.header}><FaAmbulance /> Live Navigation</h2>
-                <div style={styles.driverMetricsContainer}>
-                    <div style={styles.driverMetricBox}><p style={styles.driverMetricLabel}>Time Remaining</p><p style={styles.driverMetricValue}>{estimatedETA}</p></div>
-                    <div style={styles.driverMetricBox}><p style={styles.driverMetricLabel}>Distance Left</p><p style={styles.driverMetricValue}>{distanceRemaining}</p></div>
-                </div>
-                <div style={styles.driverInstructionCard}>
-                    {ambulancePos.isActive ? ( <><div style={styles.driverInstructionIcon}>{currentInstruction.icon}</div><p style={styles.driverInstructionText}>{currentInstruction.text}</p></> ) : ( <><div style={styles.driverInstructionIcon}><FaFlagCheckered /></div><p style={styles.driverInstructionText}>You have arrived</p></> )}
-                </div>
-                <div>
-                    <p style={{...styles.driverMetricLabel, textAlign: 'center'}}>Trip Progress</p>
-                    <div style={styles.tripProgressContainer}><div style={{...styles.tripProgressBar, width: `${routeProgress * 100}%`}}></div></div>
-                </div>
-                <button onClick={() => navigate('/')} style={{...globalStyles.secondaryButton, marginTop: 'auto'}}>End Trip</button>
+                <div style={styles.driverMetricsContainer}><div style={styles.driverMetricBox}><p style={styles.driverMetricLabel}>ETA</p><p style={styles.driverMetricValue}>{estimatedETA}</p></div><div style={styles.driverMetricBox}><p style={styles.driverMetricLabel}>Distance</p><p style={styles.driverMetricValue}>{distanceText}</p></div></div>
+                <div style={styles.driverInstructionCard}>{ambulancePos.isActive ? ( <><div style={styles.driverInstructionIcon}>{instructionIcon}</div><p style={styles.driverInstructionText}>{instructionText}</p></> ) : ( <><div style={styles.driverInstructionIcon}><FaFlagCheckered /></div><p style={styles.driverInstructionText}>You have arrived</p></> )}</div>
+                <button onClick={() => window.location.href = '/'} style={{...globalStyles.secondaryButton, marginTop: 'auto'}}>End Trip</button>
             </div>
             <div style={styles.mapContainer}>
-                <MapContainer center={MAP_CENTER} zoom={ZOOM_LEVEL} style={{ height: '100%', width: '100%' }}>
-                    <MapResizer />
-                    <MapPanner position={ambulancePos} isActive={ambulancePos.isActive} />
-                    <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" attribution='&copy; OpenStreetMap contributors' />
-                    <Polyline positions={routePath} color={'var(--accent-red)'} weight={6} opacity={0.9} />
-                    {signals.map(signal => <Marker key={signal.id} position={[signal.lat, signal.lng]} icon={signal.status.includes('Red') ? trafficIconRed : trafficIconGreen} />)}
-                    {destination && <Marker position={[destination.lat, destination.lng]} icon={hospitalIcon} title={destination.name} />}
-                    <Marker position={[ambulancePos.lat, ambulancePos.lng]} icon={ambulanceIcon} />
-                </MapContainer>
+                <GoogleMap mapContainerStyle={{ width: '100%', height: '100%' }} center={{ lat: ambulancePos.lat, lng: ambulancePos.lng }} zoom={16} options={{ styles: mapStyles, disableDefaultUI: true, zoomControl: true }}>
+                    {signals.map(signal => (<MarkerF key={signal.id} position={{ lat: signal.lat, lng: signal.lng }} icon={junctionIcon} title={signal.name} />))}
+                    <MarkerF position={{ lat: destination.lat, lng: destination.lng }} icon={hospitalIcon} title={destination.name} />
+                    <MarkerF position={{ lat: ambulancePos.lat, lng: ambulancePos.lng }} icon={ambulanceIcon} zIndex={100} />
+                    <Polyline path={trackerPath.map(p => ({ lat: p[0], lng: p[1] }))} options={{ strokeColor: 'var(--primary-blue)', strokeWeight: 6, zIndex: 1 }} />
+                </GoogleMap>
             </div>
-        </div>
+        </>
     );
+};
+
+function DriverDashboard() {
+    const query = new URLSearchParams(useLocation().search);
+    const destKey = query.get('dest') || 'manipal_hosp';
+    const destination = HOSPITAL_OPTIONS.find(h => h.value === destKey);
+    return ( <div style={styles.container}>{destination ? <MapSimulation destination={destination} /> : <h2>Error: Destination not found.</h2>}</div> );
 }
 
 export default DriverDashboard;
