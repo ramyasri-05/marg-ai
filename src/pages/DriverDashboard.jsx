@@ -44,7 +44,7 @@ const MapSimulation = ({ destination }) => {
                     {signals.map(signal => (<MarkerF key={signal.id} position={{ lat: signal.lat, lng: signal.lng }} icon={junctionIcon} title={signal.name} />))}
                     <MarkerF position={{ lat: destination.lat, lng: destination.lng }} icon={hospitalIcon} title={destination.name} />
                     <MarkerF position={{ lat: ambulancePos.lat, lng: ambulancePos.lng }} icon={ambulanceIcon} zIndex={100} />
-                    <Polyline path={trackerPath.map(p => ({ lat: p[0], lng: p[1] }))} options={{ strokeColor: 'var(--primary-blue)', strokeWeight: 6, zIndex: 1 }} />
+                    <Polyline path={trackerPath.map(p => ({ lat: p[0], lng: p[1] }))} options={{ strokeColor: '#4285F4', strokeWeight: 6, zIndex: 1 }} />
                 </GoogleMap>
             </div>
         </>
