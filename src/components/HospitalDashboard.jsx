@@ -4,7 +4,7 @@ import { GoogleMap, MarkerF, Polyline } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import { JUNCTIONS, MAP_CENTER, ZOOM_LEVEL, HOSPITAL_OPTIONS } from '../data/mockCity';
 import { useAmbulanceTracker } from '../hooks/useAmbulanceTracker.js';
-import { dashboardStyles as styles, globalStyles } from '../styles/AppStyles';
+import { dashboardStyles as styles, globalStyles } from '../Styles/AppStyles.js';
 import MARGAILogo from './MARGAILogo.jsx';
 import { FaBroadcastTower, FaUserMd, FaHospital, FaHeartbeat, FaNotesMedical, FaSpinner } from 'react-icons/fa';
 

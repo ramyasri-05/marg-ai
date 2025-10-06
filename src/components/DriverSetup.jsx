@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { HOSPITAL_OPTIONS, ROUTES_MOCK } from '../data/mockCity';
-import { globalStyles as styles } from '../styles/AppStyles';
+import { globalStyles as styles } from '../Styles/AppStyles.js';
 import MARGAILogo from './MARGAILogo';
 import { FaSync } from 'react-icons/fa';
 

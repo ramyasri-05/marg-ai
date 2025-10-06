@@ -27,15 +27,16 @@ export const useAmbulanceTracker = (initialSignals, activeRoutePath) => {
 
     const routeLength = isRouteReady ? activeRoutePath.length : 0;
 
+    // This effect is responsible for moving the ambulance along the path
     useEffect(() => {
         if (!ambulancePos.isActive || !isRouteReady) return;
         const intervalId = setInterval(() => {
+            // Use the functional form of setState to get the latest state
             setAmbulancePos(prevPos => {
-                const nextIndex = prevPos.routeIndex + 1;
-                if (nextIndex >= routeLength) {
-                    clearInterval(intervalId);
-                    return { ...prevPos, isActive: false };
+                if (prevPos.routeIndex >= routeLength - 1) {
+                    return { ...prevPos, isActive: false }; // Stop at the end
                 }
+                const nextIndex = prevPos.routeIndex + 1;
                 const [newLat, newLng] = activeRoutePath[nextIndex];
                 return { ...prevPos, lat: newLat, lng: newLng, routeIndex: nextIndex };
             });
@@ -43,22 +44,30 @@ export const useAmbulanceTracker = (initialSignals, activeRoutePath) => {
         return () => clearInterval(intervalId);
     }, [ambulancePos.isActive, routeLength, activeRoutePath, isRouteReady]);
 
+    // This effect is responsible for turning signals green as the ambulance approaches
     useEffect(() => {
         if (!ambulancePos.isActive || !isRouteReady) return;
         let nextJunctionToClear = null;
+        // Find the next junction on the path that isn't already green or manually forced red
         for (const junction of signals) {
              if (junction.status !== 'Green' && junction.status !== 'Red-Forced') {
                 const distanceToRouteEnd = geolib.getDistance({ latitude: junction.lat, longitude: junction.lng }, { latitude: activeRoutePath[routeLength-1][0], longitude: activeRoutePath[routeLength-1][1] });
                 const distanceAmbulanceToRouteEnd = geolib.getDistance({ latitude: ambulancePos.lat, longitude: ambulancePos.lng }, { latitude: activeRoutePath[routeLength-1][0], longitude: activeRoutePath[routeLength-1][1] });
+                // Check if the junction is ahead of the ambulance
                 if (distanceToRouteEnd < distanceAmbulanceToRouteEnd) {
                     nextJunctionToClear = junction;
-                    break;
+                    break; // Exit after finding the very next one
                 }
              }
         }
+
         if (nextJunctionToClear) {
-            const distance = geolib.getDistance({ latitude: ambulancePos.lat, longitude: ambulancePos.lng }, { latitude: nextJunctionToClear.lat, longitude: nextJunctionToClear.lng });
-            if (distance < PROXIMITY_THRESHOLD_METERS) {
+            const distanceToJunction = geolib.getDistance(
+                { latitude: ambulancePos.lat, longitude: ambulancePos.lng },
+                { latitude: nextJunctionToClear.lat, longitude: nextJunctionToClear.lng }
+            );
+            // If the ambulance is within the threshold, turn the light green
+            if (distanceToJunction < PROXIMITY_THRESHOLD_METERS) {
                 setSignals(prevSignals => prevSignals.map(s =>
                     s.id === nextJunctionToClear.id && s.status !== 'Red-Forced' ? { ...s, status: 'Green' } : s
                 ));
@@ -66,14 +75,15 @@ export const useAmbulanceTracker = (initialSignals, activeRoutePath) => {
         }
     }, [ambulancePos.lat, ambulancePos.lng, ambulancePos.isActive, routeLength, signals, activeRoutePath, isRouteReady]);
 
-    const toggleManualOverride = (junctionId) => {
+    const toggleManualOverride = useCallback((junctionId) => {
         setSignals(prevSignals => prevSignals.map(s => {
             if (s.id === junctionId) {
+                // Toggle between Red-Forced and its previous state (or Red)
                 return { ...s, status: s.status === 'Red-Forced' ? 'Red' : 'Red-Forced' };
             }
             return s;
         }));
-    };
+    }, []);
 
     const startSimulation = useCallback(() => {
         if (isRouteReady) {

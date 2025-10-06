@@ -1,32 +1,42 @@
 // src/components/PoliceLogin.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { globalStyles as styles } from '../styles/AppStyles';
-import MARGAILogo from './MARGAILogo.jsx';
+import { globalStyles as styles } from '../Styles/AppStyles.js';
+import { FaUserShield } from 'react-icons/fa';
 
 function PoliceLogin() {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
     const navigate = useNavigate();
 
-    const handleLogin = () => {
+    const handleLogin = (e) => {
+        e.preventDefault();
+        // In a real app, you'd have authentication logic here.
+        // For this demo, we'll just navigate to the dashboard.
         navigate('/police/dashboard');
-    };
-
-    const handleSignUp = () => {
-        alert('Police registration simulated! Please log in now.');
     };
 
     return (
         <div style={styles.centeredPageContainer}>
             <div style={styles.card}>
-                <MARGAILogo />
-                <h3 style={styles.heading}>Police Control Login</h3>
-                
-                <input type="text" placeholder="Officer ID" style={styles.input} />
-                <input type="password" placeholder="Password" style={styles.input} />
-                
-                <button onClick={handleLogin} style={styles.primaryButton}>Login</button>
-                <p style={{ margin: '20px 0', color: 'var(--text-secondary)' }}>— New User? —</p>
-                <button onClick={handleSignUp} style={styles.secondaryButton}>Sign Up</button>
+                <h3 style={{...styles.heading, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'}}><FaUserShield /> Police Login</h3>
+                <form onSubmit={handleLogin}>
+                    <input 
+                        type="text" 
+                        placeholder="Username" 
+                        value={username} 
+                        onChange={(e) => setUsername(e.target.value)} 
+                        style={styles.input}
+                    />
+                    <input 
+                        type="password" 
+                        placeholder="Password" 
+                        value={password} 
+                        onChange={(e) => setPassword(e.target.value)} 
+                        style={styles.input}
+                    />
+                    <button type="submit" style={styles.primaryButton}>Login</button>
+                </form>
             </div>
         </div>
     );
