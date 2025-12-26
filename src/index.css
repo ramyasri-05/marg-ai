@@ -1,18 +1,85 @@
 :root {
-  --primary-blue: #007BFF;
-  --primary-hover: #0056b3;
-  --secondary-gray: #6c757d;
-  --dark-bg: #121212;
-  --dark-surface: #1E1E1E;
-  --dark-card: #2A2A2A;
-  --text-primary: #EAEAEA;
-  --text-secondary: #B3B3B3;
-  --accent-cyan: #00BFFF;
-  --accent-green: #2ECC71;
-  --accent-red: #E74C3C;
-  --accent-yellow: #F1C40F;
+  /* Premium Dark Theme Palette */
+  --primary-blue: #2979FF;       /* Bright Azure */
+  --primary-hover: #0055FF;
+  
+  --dark-bg: #050505;           /* Almost Black */
+  --dark-surface: #121212;      /* Deep Gray */
+  --dark-card: rgba(30, 30, 30, 0.6); /* Glassy Effect Base */
+  
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  
+  --accent-cyan: #00E5FF;
+  --accent-green: #00E676;
+  --accent-red: #FF1744;
+  --accent-yellow: #FFEA00;
+  --accent-purple: #D500F9;
+  
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
-body { margin: 0; font-family: 'Poppins', sans-serif; background-color: var(--dark-bg); color: var(--text-primary); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-* { box-sizing: border-box; }
-@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-@keyframes flash-red { 0%, 100% { background-color: var(--accent-red); box-shadow: 0 0 20px var(--accent-red); } 50% { background-color: #a1232c; box-shadow: none; } }
+
+body {
+  margin: 0;
+  font-family: 'Outfit', sans-serif; /* Modern, geometric sans */
+  background-color: var(--dark-bg);
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(41, 121, 255, 0.08), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(213, 0, 249, 0.08), transparent 25%);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--dark-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(41, 121, 255, 0.4); }
+  50% { transform: scale(1.02); box-shadow: 0 0 20px 0 rgba(41, 121, 255, 0.7); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Fix for Chrome/Edge White Autofill Background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+}

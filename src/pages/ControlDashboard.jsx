@@ -1,59 +1,240 @@
 // src/pages/ControlDashboard.jsx
-import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { GoogleMap, MarkerF, Polyline } from '@react-google-maps/api';
-import { JUNCTIONS, MAP_CENTER, ZOOM_LEVEL, ROUTES_MOCK } from '../data/mockCity';
-import { useAmbulanceTracker } from '../hooks/useAmbulanceTracker.js';
-import { dashboardStyles as styles, globalStyles } from '../styles/AppStyles';
-import { FaBroadcastTower, FaTrafficLight, FaUserShield, FaVideo, FaHistory, FaPowerOff, FaMapPin } from 'react-icons/fa';
-import AIMonitor from '../components/AIMonitor.jsx';
+import React, { useState, useEffect } from 'react';
+import { GoogleMap, useJsApiLoader, MarkerF, DirectionsRenderer } from '@react-google-maps/api';
+import { HOSPITAL_OPTIONS, MAP_CENTER } from '../data/mockCity';
+import { useSimulation } from '../hooks/useSimulation';
+import { globalStyles as styles } from '../Styles/AppStyles';
+import { FaUserShield, FaTrafficLight, FaCheckCircle, FaMapMarkerAlt, FaExclamationCircle } from 'react-icons/fa';
 
-const mapStyles = [ { "elementType": "geometry", "stylers": [ { "color": "#242f3e" } ] }, { "elementType": "labels.text.fill", "stylers": [ { "color": "#746855" } ] }, { "elementType": "labels.text.stroke", "stylers": [ { "color": "#242f3e" } ] }, { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "poi.park", "elementType": "geometry", "stylers": [ { "color": "#263c3f" } ] }, { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [ { "color": "#6b9a76" } ] }, { "featureType": "road", "elementType": "geometry", "stylers": [ { "color": "#38414e" } ] }, { "featureType": "road", "elementType": "geometry.stroke", "stylers": [ { "color": "#212a37" } ] }, { "featureType": "road", "elementType": "labels.text.fill", "stylers": [ { "color": "#9ca5b3" } ] }, { "featureType": "road.highway", "elementType": "geometry", "stylers": [ { "color": "#746855" } ] }, { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [ { "color": "#1f2835" } ] }, { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [ { "color": "#f3d19c" } ] }, { "featureType": "transit", "elementType": "geometry", "stylers": [ { "color": "#2f3948" } ] }, { "featureType": "transit.station", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "water", "elementType": "geometry", "stylers": [ { "color": "#17263c" } ] }, { "featureType": "water", "elementType": "labels.text.fill", "stylers": [ { "color": "#515c6d" } ] }, { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [ { "color": "#17263c" } ] } ];
-const getTrafficColor = (trafficLevel) => { if (trafficLevel === 'High') return 'var(--accent-red)'; if (trafficLevel === 'Medium') return 'var(--accent-yellow)'; return 'var(--accent-green)'; };
-const getTime = () => new Date().toLocaleTimeString('en-IN', { hour12: false });
+const containerStyle = {
+    width: '100%',
+    height: '100vh'
+};
+
+// Mock Signals along a generic path
+const MOCK_SIGNALS = [
+    { id: 'SIG-01', lat: 16.5085, lng: 80.6420, label: 'Benz Circle' },
+    { id: 'SIG-02', lat: 16.5105, lng: 80.6350, label: 'MG Road Jcn' },
+    { id: 'SIG-03', lat: 16.5125, lng: 80.6250, label: 'Police Control' }
+];
 
 function ControlDashboard({ role }) {
-    const navigate = useNavigate();
-    const query = new URLSearchParams(useLocation().search);
-    const destKey = query.get('dest') || 'manipal_hosp';
-    const routeKey = query.get('route') || 'main';
-    const activeRouteData = ROUTES_MOCK[destKey]?.[routeKey];
-    
-    const [events, setEvents] = useState([]);
-    const prevSignalsRef = useRef();
-    const prevIsActiveRef = useRef(false);
-    const logContainerRef = useRef(null);
-    
-    const addEvent = (message) => { setEvents(prev => [...prev, { time: getTime(), message }]) };
-    
-    if (!activeRouteData) { return ( <div>Error</div> ); }
+    const { isLoaded, loadError } = useJsApiLoader({
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+    });
 
-    const routePath = activeRouteData.path;
-    const { signals, ambulancePos, toggleManualOverride, startSimulation } = useAmbulanceTracker(JUNCTIONS, routePath);
+    const { emergencyState, toggleGreenCorridor } = useSimulation();
 
-    useEffect(() => { if (ambulancePos.isActive && !prevIsActiveRef.current) { addEvent("Ambulance started."); } else if (!ambulancePos.isActive && prevIsActiveRef.current) { addEvent("Ambulance reached destination."); } prevIsActiveRef.current = ambulancePos.isActive; }, [ambulancePos.isActive]);
-    useEffect(() => { if (prevSignalsRef.current) { signals.forEach(signal => { const prevSignal = prevSignalsRef.current.find(p => p.id === signal.id); if (prevSignal && prevSignal.status !== signal.status) { addEvent(`Signal ${signal.name} changed to ${signal.status}.`); } }); } prevSignalsRef.current = signals; }, [signals]);
-    useEffect(() => { if (logContainerRef.current) { logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight; } }, [events]);
-    
-    const nextClearingSignal = signals.find(s => s.status.includes('Red'));
-    const googleMapsRoutePath = routePath.map(point => ({ lat: point[0], lng: point[1] }));
-    
+    const [directions, setDirections] = useState(null);
+    const [signalStates, setSignalStates] = useState({});
+    const [personnelDeployed, setPersonnelDeployed] = useState(false);
+
+    // Initialize random signal states
+    useEffect(() => {
+        const initialStates = {};
+        MOCK_SIGNALS.forEach(sig => initialStates[sig.id] = Math.random() > 0.5 ? 'RED' : 'GREEN');
+        setSignalStates(initialStates);
+    }, []);
+
+    // Sync Signal State with Green Corridor
+    useEffect(() => {
+        if (emergencyState.greenCorridor) {
+            const allGreen = {};
+            MOCK_SIGNALS.forEach(sig => allGreen[sig.id] = 'GREEN');
+            setSignalStates(allGreen);
+        }
+    }, [emergencyState.greenCorridor]);
+
+    // Calculate route when emergency is active
+    useEffect(() => {
+        if (!emergencyState.isActive || !isLoaded) return;
+
+        const destObj = emergencyState.destination ? emergencyState.destination : HOSPITAL_OPTIONS[0];
+
+        const directionsService = new window.google.maps.DirectionsService();
+        // Simulating a start point slightly away from the hospital for demo
+        const origin = { lat: 16.508, lng: 80.648 }; // Consistent start point
+
+        directionsService.route({
+            origin: origin,
+            destination: { lat: destObj.lat, lng: destObj.lng },
+            travelMode: window.google.maps.TravelMode.DRIVING
+        }, (result, status) => {
+            if (status === window.google.maps.DirectionsStatus.OK) {
+                setDirections(result);
+            }
+        });
+    }, [emergencyState.isActive, isLoaded, emergencyState.destination]);
+
+    const handleSignalClick = (sigId) => {
+        setSignalStates(prev => ({
+            ...prev,
+            [sigId]: prev[sigId] === 'RED' ? 'GREEN' : 'RED'
+        }));
+    };
+
+    const handleDeploy = () => {
+        setPersonnelDeployed(true);
+        alert(`Personnel deployed to assist ${emergencyState.vehicle}.`);
+    };
+
+    if (loadError) return <div style={{ ...styles.centeredPageContainer, color: 'var(--accent-red)' }}>Error loading maps.</div>;
+    if (!isLoaded) return <div style={{ ...styles.centeredPageContainer }}><h2 style={styles.heading}>Loading Control Center...</h2></div>;
+
     return (
-        <div style={styles.container}>
-            <div style={styles.controlPanel}>
-                <h2 style={styles.header}><FaUserShield /> {role} Control Panel</h2>
-                <div><h4 style={styles.subHeader}><FaVideo /> AI Camera Feed (J1)</h4><AIMonitor onDetect={startSimulation} isSimulationActive={ambulancePos.isActive} /></div>
-                <div><h4 style={styles.subHeader}><FaBroadcastTower /> Real-Time Status</h4><div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}><div style={styles.statCard}><div style={{...styles.subHeader, marginBottom: '5px', fontSize: '14px'}}><FaPowerOff/> Status</div><p style={{...styles.driverMetricValue, fontSize: '24px', color: ambulancePos.isActive ? 'var(--accent-green)' : 'var(--text-primary)'}}>{ambulancePos.isActive ? 'IN TRANSIT' : 'IDLE'}</p></div><div style={styles.statCard}><div style={{...styles.subHeader, marginBottom: '5px', fontSize: '14px'}}><FaMapPin/> Next Signal</div><p style={{...styles.driverMetricValue, fontSize: '24px'}}>{ambulancePos.isActive ? (nextClearingSignal ? nextClearingSignal.name : 'CLEAR') : 'N/A'}</p></div></div></div>
-                <div style={styles.eventLogContainer}><h4 style={styles.subHeader}><FaHistory /> Live Event Log</h4><div ref={logContainerRef} style={styles.eventLogContent}>{events.map((event, index) => ( <div key={index} style={styles.eventLogItem}><span style={styles.eventLogTimestamp}>{event.time}</span><span>{event.message}</span></div> ))}</div></div>
-                <div><h4 style={styles.subHeader}><FaTrafficLight /> Traffic Signals & Override</h4>{signals.map(signal => { const junction = JUNCTIONS.find(j => j.id === signal.id); return ( <div key={signal.id} style={styles.signalEntry}><div style={{display: 'flex', alignItems: 'center', gap: '10px'}}><div style={{width: '12px', height: '12px', borderRadius: '50%', backgroundColor: signal.status.includes('Red') ? 'var(--accent-red)' : 'var(--accent-green)'}}></div><span>{signal.name}</span></div><div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>{junction && (<span style={{...styles.trafficIndicator, backgroundColor: getTrafficColor(junction.traffic)}}>{junction.traffic}</span>)}<button onClick={() => toggleManualOverride(signal.id)} disabled={!ambulancePos.isActive} style={{...styles.overrideButton, opacity: ambulancePos.isActive ? 1 : 0.5}}>OVERRIDE</button></div></div> ); })}</div>
-                <button onClick={() => navigate('/')} style={{...globalStyles.secondaryButton, marginTop: 'auto'}}>End Session</button>
+        <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', display: 'flex' }}>
+
+            {/* Sidebar - Control Panel */}
+            <div style={{
+                width: '350px',
+                height: '100%',
+                backgroundColor: 'var(--dark-surface)',
+                borderRight: 'var(--glass-border)',
+                zIndex: 20,
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '4px 0 20px rgba(0,0,0,0.5)'
+            }}>
+                <div style={{ padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'linear-gradient(to right, rgba(41, 121, 255, 0.1), transparent)' }}>
+                    <h2 style={{ ...styles.heading, textAlign: 'left', fontSize: '22px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <FaUserShield color="var(--primary-blue)" /> Traffic Control
+                    </h2>
+                    <p style={{ margin: '5px 0 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>Live Emergency Monitoring</p>
+                </div>
+
+                <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+                    <h3 style={{ color: 'var(--text-secondary)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '15px' }}>Active Emergencies</h3>
+
+                    {emergencyState.isActive ? (
+                        <div
+                            style={{
+                                padding: '16px',
+                                marginBottom: '12px',
+                                borderRadius: '12px',
+                                backgroundColor: 'rgba(41, 121, 255, 0.15)',
+                                border: '1px solid var(--primary-blue)',
+                                cursor: 'default',
+                            }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontWeight: 'bold', fontSize: '15px' }}>{emergencyState.vehicle}</span>
+                                <span style={{
+                                    fontSize: '11px', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold',
+                                    backgroundColor: emergencyState.severity === 'CRITICAL' ? 'rgba(231, 76, 60, 0.2)' : 'rgba(241, 196, 15, 0.2)',
+                                    color: emergencyState.severity === 'CRITICAL' ? 'var(--accent-red)' : 'var(--accent-yellow)'
+                                }}>{emergencyState.severity}</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                                <FaMapMarkerAlt /> To: {emergencyState.destination?.name}
+                            </div>
+                            <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--accent-green)', fontWeight: 'bold' }}>
+                                ETA: {emergencyState.eta}
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                            <FaExclamationCircle size={30} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                            <p>No active emergencies detected.</p>
+                        </div>
+                    )}
+                </div>
+
+                {emergencyState.isActive && (
+                    <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(0,0,0,0.2)' }}>
+                        <h4 style={{ margin: '0 0 15px 0' }}>Actions for {emergencyState.id}</h4>
+                        <button
+                            onClick={() => toggleGreenCorridor(true)}
+                            disabled={emergencyState.greenCorridor}
+                            style={{
+                                ...styles.primaryButton,
+                                background: emergencyState.greenCorridor ? 'rgba(46, 204, 113, 0.3)' : 'var(--accent-green)',
+                                marginBottom: '10px',
+                                cursor: emergencyState.greenCorridor ? 'default' : 'pointer'
+                            }}
+                        >
+                            <FaTrafficLight /> {emergencyState.greenCorridor ? 'Green Corridor Active' : 'Activate Green Corridor'}
+                        </button>
+                        <button onClick={handleDeploy} disabled={personnelDeployed} style={{ ...styles.secondaryButton, opacity: personnelDeployed ? 0.6 : 1 }}>
+                            {personnelDeployed ? <><FaCheckCircle /> Deployed</> : 'Deploy Personnel'}
+                        </button>
+                    </div>
+                )}
             </div>
-            <div style={styles.mapContainer}>
-                <GoogleMap mapContainerStyle={{ width: '100%', height: '100%' }} center={{ lat: MAP_CENTER[0], lng: MAP_CENTER[1] }} zoom={ZOOM_LEVEL} options={{ styles: mapStyles, disableDefaultUI: true, zoomControl: true }}>
-                    {signals.map(signal => (<MarkerF key={signal.id} position={{ lat: signal.lat, lng: signal.lng }} />))}
-                    <MarkerF position={{ lat: ambulancePos.lat, lng: ambulancePos.lng }} />
-                    <Polyline path={googleMapsRoutePath} options={{ strokeColor: 'var(--accent-cyan)', strokeWeight: 5 }} />
+
+            {/* Map Area */}
+            <div style={{ flex: 1, position: 'relative' }}>
+                <GoogleMap
+                    mapContainerStyle={containerStyle}
+                    center={{ lat: MAP_CENTER[0], lng: MAP_CENTER[1] }}
+                    zoom={13}
+                    options={{
+                        styles: [
+                            { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                            { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                            { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                            { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+                            { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+                            { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] }
+                        ]
+                    }}
+                >
+                    {directions && (
+                        <DirectionsRenderer
+                            directions={directions}
+                            options={{
+                                polylineOptions: { strokeColor: 'var(--accent-green)', strokeWeight: 6 }
+                            }}
+                        />
+                    )}
+
+                    {/* LIVE AMBULANCE MARKER */}
+                    {emergencyState.isActive && emergencyState.currentLocation && (
+                        <MarkerF
+                            position={emergencyState.currentLocation}
+                            icon={{
+                                path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                                scale: 6,
+                                fillColor: emergencyState.severity === 'CRITICAL' ? '#FF1744' : '#FFD600',
+                                fillOpacity: 1,
+                                strokeColor: 'white',
+                                strokeWeight: 2,
+                            }}
+                            zIndex={100}
+                        />
+                    )}
+
+                    {/* Show Mock Signals */}
+                    {MOCK_SIGNALS.map(sig => (
+                        <MarkerF
+                            key={sig.id}
+                            position={{ lat: sig.lat, lng: sig.lng }}
+                            icon={{
+                                path: window.google.maps.SymbolPath.CIRCLE,
+                                scale: 8,
+                                fillColor: signalStates[sig.id] === 'GREEN' ? '#00E676' : '#FF1744',
+                                fillOpacity: 1,
+                                strokeColor: 'white',
+                                strokeWeight: 2,
+                            }}
+                            onClick={() => handleSignalClick(sig.id)}
+                            title={`${sig.label}: ${signalStates[sig.id]}`}
+                        />
+                    ))}
                 </GoogleMap>
+
+                {/* Floating Legend */}
+                <div style={{
+                    position: 'absolute', top: '20px', right: '20px',
+                    backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)',
+                    padding: '10px 15px', borderRadius: '8px', color: 'white', fontSize: '12px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#00E676' }}></div> Signal Green
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#FF1744' }}></div> Signal Red
+                    </div>
+                </div>
             </div>
         </div>
     );
